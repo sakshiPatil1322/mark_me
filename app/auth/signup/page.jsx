@@ -1,8 +1,11 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation"; // ✅ import router
 import api from "@/lib/axios";
 
 export default function RegisterPage() {
+  const router = useRouter(); // ✅ initialize router
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -25,8 +28,28 @@ export default function RegisterPage() {
     try {
       const res = await api.post(`/auth/signup`, formData);
       setMessage(res.data.message);
+
+      if (res.data.message === "User registered successfully.") {
+        setFormData({
+          name: "",
+          email: "",
+          password: "",
+          role: "student",
+          rollNumber: "",
+          standard: "",
+          division: "",
+          secretKey: "",
+        }); // ✅ clear fields
+
+        router.push("/auth/login"); // ✅ redirect to login page
+      }
     } catch (err) {
       setMessage(err.response?.data?.error || "Signup failed.");
+      setFormData({
+        ...formData,
+        password: "",
+        secretKey: formData.role !== "student" ? "" : formData.secretKey,
+      }); // optional: clear only sensitive fields
     }
   };
 
@@ -36,7 +59,9 @@ export default function RegisterPage() {
         onSubmit={handleSubmit}
         className="bg-white p-6 sm:p-8 rounded-2xl shadow-2xl w-full max-w-md space-y-4"
       >
-        <h2 className="text-3xl font-extrabold text-center text-gray-800">Register</h2>
+        <h2 className="text-3xl font-extrabold text-center text-gray-800">
+          Register
+        </h2>
 
         {/* Common Fields */}
         <input
@@ -135,10 +160,16 @@ export default function RegisterPage() {
           Register
         </button>
 
-        {message && (message==="User registered successfully." ?
-          <p className="text-center text-sm font-medium text-green-500">{message}</p> :
-          <p className="text-center text-sm font-medium text-red-500">{message}</p>
-        )}
+        {message &&
+          (message === "User registered successfully." ? (
+            <p className="text-center text-sm font-medium text-green-500">
+              {message}
+            </p>
+          ) : (
+            <p className="text-center text-sm font-medium text-red-500">
+              {message}
+            </p>
+          ))}
       </form>
     </div>
   );

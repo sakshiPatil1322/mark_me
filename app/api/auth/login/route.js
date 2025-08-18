@@ -10,26 +10,23 @@ export async function POST(req) {
 
     const { email, password } = await req.json();
 
-    // Check if user exists
     const user = await User.findOne({ email });
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
+    if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
-    // Check password
     const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
-    }
+    if (!isPasswordValid) return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
 
-    // Create JWT token
     const token = jwt.sign(
-      { id: user._id, email: user.email },
+      { id: user._id, email: user.email, role: user.role, name: user.name },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
 
-    return NextResponse.json({ message: "Login successful", token });
+    return NextResponse.json({
+      message: "Login successful",
+      token,
+      user: { id: user._id, email: user.email, role: user.role, name: user.name },
+    });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
